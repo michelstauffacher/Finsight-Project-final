@@ -2,29 +2,31 @@ import pandas as pd # Import the pandas library
 import streamlit as st # Import the streamlit library
 import yfinance as yf # Import the yfinance library
 
-# Sidebar Search (see home.py for more details)
-with st.sidebar:
-    st.header("Search Stock")
-    with st.form("sidebar_search"):
-        ticker_input = st.text_input("Enter Ticker", placeholder="e.g. AAPL")
-        search_clicked = st.form_submit_button("Search", use_container_width=True)
+# Search bar is in the sidebar for rapid access
+with st.sidebar: # Using a sidebar to show the search bar
+    st.header("Search Stock") # Header for the search bar
+    with st.form("sidebar_search"): # Form for the search bar
+        ticker = st.text_input("Enter Ticker", placeholder="e.g. AAPL") # Text input for the ticker
+        search_clicked = st.form_submit_button("Search", use_container_width=True) # Submit button for the search bar
 
-    if search_clicked and ticker_input:
-        search = yf.Search(ticker_input)
-        results = search.quotes
-        options = {}
-        for r in results:
-            name = r.get("shortname") or r.get("longname", "Unknown")
-            symbol = r.get("symbol", "")
-            if symbol:
-                options[f"{name} ({symbol})"] = symbol
-        st.session_state["options"] = options
+    # This code block is used to search for the ticker and show the options
+    if search_clicked and ticker: # If the search button is clicked and the ticker is not empty, ...
+        search = yf.Search(ticker) # Search for the ticker
+        results = search.quotes # Get the results
+        options = {} # Initialize the options dictionary
+        for r in results: # Loop through the results
+            name = r.get("shortname") or r.get("longname", "Unknown") # Get the name
+            symbol = r.get("symbol", "") # Get the symbol
+            if symbol: # If the symbol is not empty, ...
+                options[f"{name} ({symbol})"] = symbol # Add the option to the options
+        st.session_state["options"] = options # Set the options to the session state
 
-    if "options" in st.session_state and st.session_state["options"]:
-        selected = st.selectbox("Select a company", list(st.session_state["options"].keys()))
-        if st.button("Analyse", use_container_width=True):
-            st.session_state["ticker"] = st.session_state["options"][selected]
-            st.switch_page("home.py")
+    # This code block is used to show the select box for the options
+    if "options" in st.session_state and st.session_state["options"]: # If the options are in the session state, show the select box
+        selected = st.selectbox("Select a company", list(st.session_state["options"].keys())) # Select the company
+        if st.button("Analyse", use_container_width=True): # If the button is clicked, switch to the home page
+            st.session_state["ticker"] = st.session_state["options"][selected] # Set the ticker to the session state
+            st.switch_page("home.py") # Switch to the home page
 
 # Check if the ticker is in the session state and if not, show an error message and stop the program
 if "ticker" not in st.session_state: # If the ticker is not in the session state, show an error
@@ -217,6 +219,11 @@ def render_tables(metrics): # initialising the render_tables function
     ]
     # This code block is used to create the bridge dataframe (i.e. the valuation bridge table)
     bridge = pd.DataFrame(bridge_rows, columns=["Item", "Value (USD mm)"]) # Create the bridge dataframe
+    st.write("Valuation Bridge") # Show the title for the valuation bridge
+    st.dataframe( # Show the dataframe for the valuation bridge
+        bridge.style.format({"Value (USD mm)": "{:,.1f}"}), # Format the value in millions
+        use_container_width=True,
+    )
 
 # This code block is used to check if the data is loaded on the Home page
 if "yf_data" not in st.session_state or st.session_state.get("data_ticker") != ticker: # Using a guard to check if the data is loaded on the Home page
@@ -241,11 +248,11 @@ if revenue_0_check <= 0: # If the revenue is less than or equal to 0, ...
         st.stop() # Stop the program
 
 # Default slider inputs
-default_revenue_growth = 0.10
-default_ebit_margin = 0.15
-default_tax_rate = 0.21
-default_da_pct = 0.03
-default_capex_pct = 0.04
+default_revenue_growth = 0.10 # Set the default revenue growth to 10%
+default_ebit_margin = 0.15 # Set the default EBIT margin to 15%
+default_tax_rate = 0.21 # Set the default tax rate to 21%
+default_da_pct = 0.03 # Set the default D&A as % of revenue to 3%
+default_capex_pct = 0.04 # Set the default Capex as % of revenue to 4%
 
 # Two-column layout: sliders on the left, key metrics on the right
 controls, output = st.columns([1, 2])
